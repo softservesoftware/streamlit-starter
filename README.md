@@ -1,17 +1,20 @@
 # Streamlit-Starter
 
-A scalable, modular, and extensible boilerplate for building Streamlit applications with support for **routing**, **URL parameters**, and reusable **components**.
+A scalable, modular, and extensible boilerplate for building Streamlit applications with support for **routing**, **authentication**, and reusable **components**.
+
+![Demo Example](static/demo.gif "Demo Example")
 
 ---
 
 ## Features
 
 - **Modular Architecture**: Organized file structure for easy development and scaling.
-- **Routing with URL Parameters**: Navigate between pages using query parameters (e.g., `?page=home`).
-- **Reusable Components**: Centralized components like navigation bars and sidebars.
-- **Decorators**: Easily add logging, authentication, and other reusable logic.
-- **Custom Styling**: Support for custom CSS through the `static/` folder.
-- **Scalability**: Designed to grow with your application needs.
+- **Multi Page Support**: Navigate between pages using routes (ie `/dasboard`) and protect them as needed with authentication
+- **Authentication**: Quick and simple authentication with oauth providers (e.g., google, microsoft, etc.)
+- **Reusable Components**: Centralized reusable component examples (footers, widgets, etc.)
+- **Decorators**: Easily add authentication, data manipulation, and other reusable logic.
+- **Custom Styling**: Support for custom CSS through the `static/styles.css`.
+
 
 ---
 
@@ -19,27 +22,20 @@ A scalable, modular, and extensible boilerplate for building Streamlit applicati
 
 ```plaintext
 streamlit_app/
-├── app.py                  # Main entry point for the Streamlit app
+├── home.py                 # Main entry point for the Streamlit app
 ├── pages/
-│   ├── __init__.py
-│   ├── home.py             # Home page logic
 │   ├── about.py            # About page logic
 │   ├── dashboard.py        # Dashboard logic
 ├── components/
-│   ├── __init__.py
-│   ├── navbar.py           # Navigation bar component
-│   ├── sidebar.py          # Sidebar component
-│   ├── footer.py           # Footer component
+│   ├── footer.py           # Reusable Footer component
 ├── utils/
-│   ├── __init__.py
-│   ├── decorators.py       # Common decorators (auth, logging, etc.)
-│   ├── helpers.py          # Helper functions
-│   ├── url_manager.py      # URL parameter handling
+│   ├── authentication.py   # Decorators for auth (is_logged_in, protect_route, etc.)
 ├── static/
-│   ├── styles.css          # CSS styles (if needed)
-├── data/
-│   ├── sample_data.json    # Example data storage
-├── config.py               # Configuration file
+│   ├── data_example.csv    # Example dataset for dashboard
+│   ├── matt.webp           # Example image
+├── .streamlit/
+│   ├── auth_config.yaml    # Authentication settings (oauth,users, etc.)
+│   ├── config.toml         # Streamlit configs (env vars, secrets, etc.)
 └── requirements.txt        # Python dependencies
 ```
 
@@ -62,45 +58,51 @@ streamlit_app/
 
 3. Run the app:
    ```bash
-   streamlit run app.py
+   streamlit run home.py
    ```
 
 ---
 
 ## Usage
 
-### Adding Pages
+### Adding New Pages
 1. Create a new file under `pages/` (e.g., `example.py`).
 2. Add a `render()` function in the new page file:
    ```python
    import streamlit as st
+   from utils.authentication import login_required
 
+   # optional add the login required decorator
+   @login_required
    def render():
        st.title("Example Page")
        st.write("Content for your new page.")
+   render()
    ```
-3. Add the page to the navbar in `components/navbar.py`:
-   ```python
-   options = {
-       "Home": "home",
-       "About": "about",
-       "Dashboard": "dashboard",
-       "Example": "example"
-   }
-   ```
-
-### URL Parameters
-- The app uses query parameters for routing.
-- Example: `http://localhost:8501/?page=dashboard` will load the `dashboard` page.
 
 ### Custom Decorators
-- Add reusable decorators in `utils/decorators.py` for tasks like authentication or logging:
+- Add reusable decorators in `utils/` for tasks like authentication or logging. These can be reused across your application to achieve common tasks such as protecting certain pages behind authentication.
    ```python
-   def sample_decorator(func):
-       def wrapper(*args, **kwargs):
-           # Add custom logic here
-           return func(*args, **kwargs)
-       return wrapper
+   def login_required(func):
+    """Decorator for requiring authentication."""
+
+      @wraps(func)
+      def wrapper(*args, **kwargs):
+         authenticator = stauth.Authenticate(
+               config["credentials"],
+               config["cookie"]["name"],
+               config["cookie"]["key"],
+               config["cookie"]["expiry_days"],
+         )
+         if not st.session_state["authentication_status"]:
+               st.error("You must log in to access this page.")
+               authenticator.login()
+               st.stop()
+         else:
+               authenticator.logout()
+               return func(*args, **kwargs)
+
+      return wrapper
    ```
 
 ### Styling
@@ -112,6 +114,7 @@ streamlit_app/
 ---
 
 ## Contributing
+Changes, new ideas, and improvements are welcome! Please ensure that the following steps are taken when contributing.
 
 1. Fork the repository.
 2. Create a new branch:
@@ -138,7 +141,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Author
 
-[Your Name](https://github.com/yourusername)  
+[Softserve Software LLC](https://softservsoftware.com)  
 Feel free to reach out for suggestions, improvements, or general feedback!
 
 ---

@@ -23,7 +23,6 @@ def login_required(func):
             config["cookie"]["expiry_days"],
         )
         if not st.session_state["authentication_status"]:
-            st.error("You must log in to access this page.")
             authenticator.login()
             st.stop()
         else:
